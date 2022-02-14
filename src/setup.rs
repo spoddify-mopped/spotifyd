@@ -16,6 +16,7 @@ use librespot_playback::{
     config::AudioFormat,
     mixer::{self, Mixer},
 };
+use librespot_protocol::authentication::AuthenticationType;
 use log::info;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -101,6 +102,8 @@ pub(crate) fn initial_state(config: config::SpotifydConfig) -> main_loop::MainLo
     let username = config.username;
     #[allow(unused_mut)] // mut is needed behind the dbus_keyring flag.
     let mut password = config.password;
+    let oauth_token = config.oauth_token;
+
     #[cfg(feature = "dbus_keyring")]
     {
         // We only need to check if an actual user has been specified as
@@ -113,7 +116,9 @@ pub(crate) fn initial_state(config: config::SpotifydConfig) -> main_loop::MainLo
         }
     }
 
-    let connection = if let Some(credentials) = get_credentials(&cache, &username, &password) {
+    let connection = if let Some(credentials) =
+        get_credentials(&cache, &username, &password, &oauth_token)
+    {
         let sess: Pin<Box<dyn futures::Future<Output = Result<Session, SessionError>>>> = Box::pin(
             Session::connect(session_config.clone(), credentials, cache.clone()),
         );
@@ -151,13 +156,26 @@ pub(crate) fn initial_state(config: config::SpotifydConfig) -> main_loop::MainLo
     }
 }
 
+fn credentials_with_token(username: impl Into<String>, token: impl Into<String>) -> Credentials {
+    Credentials {
+        username: username.into(),
+        auth_type: AuthenticationType::AUTHENTICATION_SPOTIFY_TOKEN,
+        auth_data: token.into().into_bytes(),
+    }
+}
+
 fn get_credentials(
     cache: &Option<Cache>,
     username: &Option<String>,
     password: &Option<String>,
+    token: &Option<String>,
 ) -> Option<Credentials> {
     if let (Some(username), Some(password)) = (username, password) {
         return Some(Credentials::with_password(username, password));
+    }
+
+    if let (Some(username), Some(token)) = (username, token) {
+        return Some(credentials_with_token(username, token));
     }
 
     cache.as_ref()?.credentials()

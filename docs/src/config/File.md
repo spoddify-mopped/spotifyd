@@ -14,6 +14,11 @@ username = "username"
 # Your Spotify account password.
 password = "password"
 
+# A spotify oauth access token with the `streaming` scope.
+# This is an alternative to the `password` field. Both
+# can't be used simultaneously.
+oauth_token = "oauth_token"
+
 # A command that gets executed and can be used to
 # retrieve your password.
 # The command should return the password on stdout.
@@ -114,7 +119,7 @@ device_type = "speaker"
 
 - **`use_keyring`** config entry / **`--use-keyring`** CLI flag <!-- omit in toc -->
 
-  This features leverages [Linux's DBus Secret Service API][secret-storage-specification] or native macOS keychain in order to forgo the need to store your password directly in the config file. To use it, compile with the `dbus_keyring` feature and set the `use-keyring` config entry to `true` or pass the `--use-keyring` CLI flag  during start to the daemon. Remove the `password` and/or `password_cmd` config entries.
+  This features leverages [Linux's DBus Secret Service API][secret-storage-specification] or native macOS keychain in order to forgo the need to store your password directly in the config file. To use it, compile with the `dbus_keyring` feature and set the `use-keyring` config entry to `true` or pass the `--use-keyring` CLI flag during start to the daemon. Remove the `password` and/or `password_cmd` config entries.
 
   Your keyring entry needs to have the following attributes set:
 

@@ -271,6 +271,10 @@ pub struct SharedConfigValues {
     #[structopt(conflicts_with = "password_cmd", long, short, value_name = "string")]
     password: Option<String>,
 
+    /// A spotify oauth access token with the `streaming` scope.
+    #[structopt(conflicts_with = "password", long, short = "t", value_name = "string")]
+    oauth_token: Option<String>,
+
     /// Enables keyring password access
     #[cfg_attr(
         feature = "dbus_keyring",
@@ -429,6 +433,8 @@ impl fmt::Debug for SharedConfigValues {
 
         let password_value = extract_credential!(&self.password);
 
+        let oauth_token_value = extract_credential!(&self.oauth_token);
+
         let password_cmd_value = extract_credential!(&self.password_cmd);
 
         let username_value = extract_credential!(&self.username);
@@ -440,6 +446,7 @@ impl fmt::Debug for SharedConfigValues {
             .field("username_cmd", &username_cmd_value)
             .field("password", &password_value)
             .field("password_cmd", &password_cmd_value)
+            .field("oauth_token", &oauth_token_value)
             .field("use_keyring", &self.use_keyring)
             .field("use_mpris", &self.use_mpris)
             .field("on_song_change_hook", &self.on_song_change_hook)
@@ -507,6 +514,7 @@ impl SharedConfigValues {
             username_cmd,
             password,
             password_cmd,
+            oauth_token,
             normalisation_pregain,
             bitrate,
             initial_volume,
@@ -551,6 +559,7 @@ fn device_id(name: &str) -> String {
 pub(crate) struct SpotifydConfig {
     pub(crate) username: Option<String>,
     pub(crate) password: Option<String>,
+    pub(crate) oauth_token: Option<String>,
     #[allow(unused)]
     pub(crate) use_keyring: bool,
     pub(crate) use_mpris: bool,
@@ -678,6 +687,7 @@ pub(crate) fn get_internal_config(config: CliConfig) -> SpotifydConfig {
             None => info!("No password_cmd specified"),
         }
     }
+
     let mut proxy_url = None;
     match config.shared_config.proxy {
         Some(s) => match Url::parse(&s) {
@@ -710,6 +720,7 @@ pub(crate) fn get_internal_config(config: CliConfig) -> SpotifydConfig {
     SpotifydConfig {
         username,
         password,
+        oauth_token: config.shared_config.oauth_token,
         use_keyring: config.shared_config.use_keyring,
         use_mpris: config.shared_config.use_mpris.unwrap_or(true),
         cache,
